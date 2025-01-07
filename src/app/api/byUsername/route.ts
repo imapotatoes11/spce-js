@@ -1,4 +1,4 @@
-import { DiscordMessageFetcher, AUTHORS } from '@/lib/messages';
+import { DiscordMessageFetcher, AUTHORS, CHANNELS } from '@/lib/messages';
 import { NextResponse } from 'next/server';
 import { replaceUsernames, gpt_response } from '@/lib/middleman';
 
@@ -7,6 +7,7 @@ export async function POST(req: Request) {
         // const { username } = await req.json();
         const { searchParams } = new URL(req.url)
         const username = searchParams.get('username') || "imapotatoes11";
+        const channel = CHANNELS[searchParams.get('channel') as keyof typeof CHANNELS] || CHANNELS.woment;
 
         // if (!username || typeof username !== 'string') {
         //     return new NextResponse('Invalid username parameter', { status: 400 });
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
         //     },
         // });
 
-        const fetcher = new DiscordMessageFetcher();
+        const fetcher = new DiscordMessageFetcher(channel);
         const messages = await fetcher.getMessagesAfterDate(
             await fetcher.getLastMessageTimestampFromUser(AUTHORS[username as keyof typeof AUTHORS])
         );

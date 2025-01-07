@@ -10,7 +10,12 @@ export const userMapping = {
     'imapotatoes11': 'Kevin',
     'JmsTng': 'James Tung',
     'nasenz': 'Nasen',
-    'Piano201': 'Ryan'
+    'Piano201': 'Ryan',
+    'justyourlocaldemon': 'annie',
+    'le_dino': 'kiera',
+    'thescammedartist': 'yes',
+    'xav_ier': 'yes',
+    'imperfectpurge': 'mia'
 };
 
 export function replaceUsernames(messages: string[]): string[] {

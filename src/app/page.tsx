@@ -12,35 +12,82 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Loader2 } from "lucide-react"
+import Karchdown from "@/components/Karchdown"
 
 export default function DiscordSummarizer() {
     const [channel, setChannel] = useState("")
     const [summaryType, setSummaryType] = useState("date")
     const [date, setDate] = useState<Date>()
     const [summary, setSummary] = useState("")
+    const [username, setUsername] = useState("imapotatoes11")
+
+    const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        // Here you would typically call your AI service to generate the summary
-        // For this example, we'll just set a mock summary
-        setSummary(`
-# Summary for #${channel}
+        setLoading(true)
+        setSummary("")
+        switch (summaryType) {
+            case "date":
+                try {
+                    if (!date) {
+                        setSummary("No date selected")
+                        return
+                    }
+                    // setSummary(`date: ${format(date, "PPP")}, channel: ${channel}`)
+                    // setSummary(`date: ${format(date, "PPP")}, channel: ${channel}, ${format(date, 'MM-dd-yyyy')}`)
+                    ///////////////////////////////////////////////////////////////
+                    const res = await fetch('/api/byDate', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            selectedDate: format(date, "MM-dd-yyyy"),
+                            channel: channel
+                        })
+                    });
+                    // setSummary(`posting to /api/byDate body ${JSON.stringify({ date: format(date, "MM-dd-yyyy") })}`)
 
-## Conversation 1: Project Updates
-- Alice shared progress on the frontend redesign
-- Bob mentioned backend optimizations are complete
-- Team discussed potential launch date
+                    const reader = res.body?.getReader();
+                    if (!reader) return;
 
-## Conversation 2: Bug Triage
-- Charlie reported a critical bug in the payment system
-- Dave suggested a hotfix and will implement it today
-- Team agreed to do a thorough review of the affected module
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
 
-## Conversation 3: New Feature Ideas
-- Eve proposed a new analytics dashboard
-- Frank suggested integrating machine learning for predictive analytics
-- Team decided to create a proposal for the next sprint planning
-    `)
+                        const text = new TextDecoder().decode(value).replace(/\n/g, '<br>');
+                        setSummary((prev) => prev + text);
+                    }
+                    ///////////////////////////////////////////////////////////////
+                    setLoading(false)
+                } catch (error) {
+                    setSummary("Invalid date")
+                }
+                break
+            case "last-message":
+                setSummary(`last-message: ${channel}`)
+                ////////////////////////////////////////////////////////////////
+                const res = await fetch('/api/byUsername', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        username: username,
+                        channel: channel
+                    })
+                });
+
+                const reader = res.body?.getReader();
+                if (!reader) return;
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    const text = new TextDecoder().decode(value).replace(/\n/g, '<br>');
+                    setSummary((prev) => prev + text);
+                }
+                ///////////////////////////////////////////////////////////////
+                setLoading(false)
+                break
+        }
     }
 
     return (
@@ -57,9 +104,11 @@ export default function DiscordSummarizer() {
                                 <SelectValue placeholder="Select a channel" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="general">general</SelectItem>
-                                <SelectItem value="random">random</SelectItem>
-                                <SelectItem value="development">development</SelectItem>
+                                <SelectItem value="woment">Women't</SelectItem>
+                                <SelectItem value="beans">Beans</SelectItem>
+                                <SelectItem value="beans2">Beans but with rian</SelectItem>
+                                {/* <SelectItem value="random">random</SelectItem>
+                                <SelectItem value="development">development</SelectItem> */}
                             </SelectContent>
                         </Select>
                     </div>
@@ -104,16 +153,37 @@ export default function DiscordSummarizer() {
                         </div>
                     )}
 
-                    <Button type="submit" className="w-full">Generate Summary</Button>
+                    {summaryType === "last-message" && (
+                        <div className="space-y-2">
+                            <Label htmlFor="username">Select a User</Label>
+                            <Select value={username} onValueChange={setUsername}>
+                                <SelectTrigger id="username">
+                                    <SelectValue placeholder="Select a User" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="imapotatoes11">kevin</SelectItem>
+                                    <SelectItem value="piano201">rian</SelectItem>
+                                    <SelectItem value="_no.u">alex</SelectItem>
+                                    <SelectItem value="jmstng">tung</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" /> : ""}
+                        Generate Summary
+                    </Button>
                 </form>
             </CardContent>
             <CardFooter>
                 {summary && (
                     <div className="w-full">
                         <h3 className="text-lg font-semibold mb-2">Generated Summary</h3>
-                        <pre className="whitespace-pre-wrap bg-muted p-4 rounded-md overflow-auto max-h-96">
+                        {/* <pre className="whitespace-pre-wrap bg-muted p-4 rounded-md overflow-auto max-h-96">
                             {summary}
-                        </pre>
+                        </pre> */}
+                        <Karchdown raw={summary} className="whitespace-pre-wrap" />
                     </div>
                 )}
             </CardFooter>

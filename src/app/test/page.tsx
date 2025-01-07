@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import Karchdown from '@/components/Karchdown';
 
 const TestPage = () => {
     const [response, setResponse] = useState('');
@@ -72,10 +73,11 @@ const TestPage = () => {
             {loading && <div>{progress || 'Loading...'}</div>}
             {/* {response && <div>{response}</div>} */}
             {response && (
-                <div
-                    className="whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: response }}
-                />
+                // <div
+                //     className="whitespace-pre-wrap"
+                //     dangerouslySetInnerHTML={{ __html: response }}
+                // />
+                <Karchdown raw={response} className="whitespace-pre-wrap" />
             )}
         </div>
     );

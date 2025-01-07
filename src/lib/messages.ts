@@ -7,8 +7,16 @@ dotenv.config();
 
 // Constants
 const DEFAULT_CHANNEL = '1151707062208827414';
+export const CHANNELS = {
+    'woment': '1151707062208827414',
+    'beans': '1250975268739485817',
+    'beans2': '1320234641868722256'
+}
 const AUTHORS = {
-    'imapotatoes11': '642455272702345247'
+    'imapotatoes11': '642455272702345247',
+    'piano201': '573338203654717441',
+    '_no.u': '642237307465760768',
+    'jmstng': '573338203654717441',
 } as const;
 
 // Interfaces
