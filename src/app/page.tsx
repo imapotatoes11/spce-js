@@ -7,19 +7,27 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CalendarIcon } from 'lucide-react'
+import { CalendarIcon, DeleteIcon, Trash2Icon } from 'lucide-react'
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Loader2 } from "lucide-react"
 import Karchdown from "@/components/Karchdown"
+import NeoKarchdown from "@/components/NeoKarchdown"
+import { AnimatePresence, motion } from "motion/react"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export default function DiscordSummarizer() {
     const [channel, setChannel] = useState("")
     const [summaryType, setSummaryType] = useState("date")
     const [date, setDate] = useState<Date>()
-    const [summary, setSummary] = useState("")
+    const [summary, setSummary] = useState("nil")
     const [username, setUsername] = useState("imapotatoes11")
 
     const [loading, setLoading] = useState(false)
@@ -33,6 +41,7 @@ export default function DiscordSummarizer() {
                 try {
                     if (!date) {
                         setSummary("No date selected")
+                        setLoading(false)
                         return
                     }
                     // setSummary(`date: ${format(date, "PPP")}, channel: ${channel}`)
@@ -61,10 +70,11 @@ export default function DiscordSummarizer() {
                     setLoading(false)
                 } catch (error) {
                     setSummary("Invalid date")
+                    setLoading(false)
                 }
                 break
             case "last-message":
-                setSummary(`last-message: ${channel}`)
+                // setSummary(`last-message: ${channel}`)
                 ////////////////////////////////////////////////////////////////
                 const res = await fetch('/api/byUsername', {
                     method: 'POST',
@@ -170,22 +180,42 @@ export default function DiscordSummarizer() {
                         </div>
                     )}
 
-                    <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? <Loader2 className="animate-spin" /> : ""}
-                        Generate Summary
-                    </Button>
+                    <div className="w-full flex flex-row gap-2">
+                        <Button type="submit" className="w-full" disabled={loading}>
+                            {loading ? <Loader2 className="animate-spin" /> : ""}
+                            Generate Summary
+                        </Button>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Button type="button" className="w-fit"
+                                        onClick={(e) => { e.preventDefault(); setSummary("nil"); setLoading(false) }}
+                                    ><Trash2Icon /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Clear Response</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                    </div>
                 </form>
             </CardContent>
             <CardFooter>
-                {summary && (
-                    <div className="w-full">
-                        <h3 className="text-lg font-semibold mb-2">Generated Summary</h3>
-                        {/* <pre className="whitespace-pre-wrap bg-muted p-4 rounded-md overflow-auto max-h-96">
-                            {summary}
-                        </pre> */}
-                        <Karchdown raw={summary} className="whitespace-pre-wrap" />
-                    </div>
-                )}
+                <AnimatePresence>
+                    {(summary !== 'nil') && (
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.25, opacity: 0 }}
+                            transition={{ duration: 0.5, type: "easeOut" }}
+                            className="w-full"
+                        >
+                            <h3 className="text-2xl font-semibold mb-2">Generated Summary</h3>
+                            <NeoKarchdown raw={summary} loading={loading} className="" />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </CardFooter>
         </Card>
     )

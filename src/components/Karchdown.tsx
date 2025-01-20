@@ -1,46 +1,77 @@
 'use client'
 
+import { useState, useEffect } from 'react';
+import { TextAnimate } from "./ui/text-animate";
+import { AnimatePresence } from "motion/react";
+
 interface KarchdownProps {
     className: string;
     raw: string;
 }
+
+interface Token {
+    text: string;
+    id: number;
+    animated: boolean;
+    delay: number;
+}
+
 export default function Karchdown({ className = '', raw = '' }: KarchdownProps) {
-    let split = raw.split('<br>');
-    let output = split.map((line, index) => {
-        // format bold, italics, underline
-        line = line.replace(/\*\*(.*?)\*\*/g, '<strong className="font-bold">$1</strong>');
-        line = line.replace(/\*(.*?)\*/g, '<em className="italic">$1</em>');
-        line = line.replace(/__(.*?)__/g, '<u className="underline">$1</u>');
+    const [tokens, setTokens] = useState<Token[]>([]);
+    const [nextId, setNextId] = useState(0);
+    const [lastDelay, setLastDelay] = useState(0);
 
-        if (line === "") line = ' ';
-
-        if (line.startsWith('# ')) {
-            line = line.replace(/^#+ /, '');
-            return <h1 key={index} className="text-2xl font-bold" dangerouslySetInnerHTML={{ __html: line }} />;
-        } if (line.startsWith('## ')) {
-            line = line.replace(/^#+ /, '');
-            return <h2 key={index} className="text-xl font-bold" dangerouslySetInnerHTML={{ __html: line }} />;
-        } if (line.startsWith('### ')) {
-            line = line.replace(/^#+ /, '');
-            return <h3 key={index} className="text-lg font-bold" dangerouslySetInnerHTML={{ __html: line }} />;
-        } if (line.startsWith('#### ')) {
-            line = line.replace(/^#+ /, '');
-            return <h4 key={index} className="text-md font-bold" dangerouslySetInnerHTML={{ __html: line }} />;
+    useEffect(() => {
+        if (raw.length < tokens.reduce((acc, t) => acc + t.text.length, 0)) {
+            setTokens([{
+                text: raw,
+                id: nextId,
+                animated: false,
+                delay: 0
+            }]);
+            setNextId(prev => prev + 1);
+            setLastDelay(0);
+        } else {
+            const newContent = raw.slice(tokens.reduce((acc, t) => acc + t.text.length, 0));
+            if (newContent) {
+                const newDelay = lastDelay + 0.15;
+                setTokens(prev => [...prev, {
+                    text: newContent,
+                    id: nextId,
+                    animated: false,
+                    delay: newDelay
+                }]);
+                setNextId(prev => prev + 1);
+                setLastDelay(newDelay);
+            }
         }
-
-        if (line.startsWith('- ')) {
-            line = line.replace(/^- /, '');
-            return <div className="h-min flex justify-start gap-3 align-middle" key={index}>
-                <span className="h-1.5 w-1.5 my-auto bg-black dark:bg-white rounded-full"></span>
-                <li key={index} dangerouslySetInnerHTML={{ __html: line }} />
-            </div>
-        }
-        return <p key={index} dangerouslySetInnerHTML={{ __html: line }} />;
-    });
+    }, [raw]);
 
     return (
         <div className={className}>
-            <ul>{output}</ul>
+            <AnimatePresence mode="sync">
+                {tokens.map(({ text, id, animated, delay }) => (
+                    <span key={id} style={{ display: 'inline-block' }}>
+                        {!animated ? (
+                            <TextAnimate
+                                animation="slideLeft"
+                                by="character"
+                                delay={delay}
+                                startOnView={false}
+                                onAnimationComplete={() => {
+                                    setTokens(prev =>
+                                        prev.map(t => t.id === id ? { ...t, animated: true } : t)
+                                    );
+                                }}
+                            >
+                                {text}
+                            </TextAnimate>
+                        ) : (
+                            text
+                        )}
+                    </span>
+                ))}
+            </AnimatePresence>
         </div>
     );
 }
