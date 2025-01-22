@@ -1,2 +1,2 @@
 # spce-js
- js version of spce
+ message summarizer for discord, work in progress...
