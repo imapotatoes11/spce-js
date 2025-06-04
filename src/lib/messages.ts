@@ -79,6 +79,8 @@ class DiscordMessageFetcher {
                 onProgress?.(`retrieving messages (${offset}, ${batch.length} messages)`);
                 offset += 25;
 
+                // await new Promise(resolve => setTimeout(resolve, 1000));
+
             } catch (error: any) {
                 // If we're rate-limited, wait the suggested time and retry
                 if (error.response?.status === 429) {
