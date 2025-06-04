@@ -58,9 +58,7 @@ class DiscordMessageFetcher {
         const allMessages: string[] = [];
         let offset = 0;
 
-        // console.log('retrieving messages...');
         onProgress?.('retrieving messages...');
-
         while (true) {
             try {
                 const url = `${this.baseUrl}/messages/search?min_id=${this.dateToSnowflake(date)}&offset=${offset}`;
@@ -81,13 +79,21 @@ class DiscordMessageFetcher {
                 onProgress?.(`retrieving messages (${offset}, ${batch.length} messages)`);
                 offset += 25;
 
-                await new Promise(resolve => setTimeout(resolve, 500)); // Rate limit delay
             } catch (error: any) {
-                if (error.response?.status in [400, 404]) {
-                    console.log(`Reached end with status code: ${error.response.status}`);
-                } else {
-                    console.error('Failed to retrieve messages:', error.response?.status);
+                // If we're rate-limited, wait the suggested time and retry
+                if (error.response?.status === 429) {
+                    const retryAfter = parseInt(error.response.headers['retry-after']) || 1;
+                    console.warn(`Rate limited. Retrying after ${retryAfter} seconds`);
+                    await new Promise(res => setTimeout(res, retryAfter * 1000));
+                    continue;
                 }
+                // Stop when no more messages
+                if (error.response?.status === 400 || error.response?.status === 404) {
+                    console.log(`Reached end with status code: ${error.response.status}`);
+                    break;
+                }
+                // Other errors: abort
+                console.error('Failed to retrieve messages:', error.response?.status);
                 break;
             }
         }
